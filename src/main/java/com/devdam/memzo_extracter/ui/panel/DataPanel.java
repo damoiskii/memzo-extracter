@@ -371,7 +371,27 @@ public class DataPanel extends JPanel {
         table.setSpacingBefore(10);
         
         // Set column widths
-        float[] columnWidths = {2f, 2f, 2f, 1.5f, 1f, 2f, 1.5f, 1.5f, 1.5f};
+        final float EMAIL_COLUMN_WIDTH = 2f;
+        final float NAME_COLUMN_WIDTH = 2f;
+        final float CONTACT_COLUMN_WIDTH = 2f;
+        final float DATE_COLUMN_WIDTH = 1.5f;
+        final float PHOTOS_COLUMN_WIDTH = 1f;
+        final float IMAGE_COLUMN_WIDTH = 2f;
+        final float DOWNLOADS_COLUMN_WIDTH = 1.5f;
+        final float SHARED_COLUMN_WIDTH = 1.5f;
+        final float DOWNLOADED_COLUMN_WIDTH = 1.5f;
+        
+        float[] columnWidths = {
+            EMAIL_COLUMN_WIDTH,
+            NAME_COLUMN_WIDTH,
+            CONTACT_COLUMN_WIDTH,
+            DATE_COLUMN_WIDTH,
+            PHOTOS_COLUMN_WIDTH,
+            IMAGE_COLUMN_WIDTH,
+            DOWNLOADS_COLUMN_WIDTH,
+            SHARED_COLUMN_WIDTH,
+            DOWNLOADED_COLUMN_WIDTH
+        };
         table.setWidths(columnWidths);
         
         // Add headers
