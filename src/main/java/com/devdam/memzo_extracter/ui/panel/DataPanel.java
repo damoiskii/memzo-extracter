@@ -218,13 +218,7 @@ public class DataPanel extends JPanel {
         }
     }
     
-    // Add this public method to expose the upload functionality
-    public void triggerFileUpload() {
-        uploadCsvFile(null); // Call the existing private method
-    }
-
-    // Add this method to expose current data
     public List<SelfieDetail> getCurrentData() {
-        return tableModel.getAllData(); // Assuming your table model has this method
+        return tableModel.getData();
     }
 }

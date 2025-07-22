@@ -80,25 +80,11 @@
 			<version>1.5.4</version>
 		</dependency>
 		
-		<!-- LGoodDatePicker for modern date selection -->
+		<!-- LGoodDatePicker for date selection -->
 		<dependency>
 			<groupId>com.github.lgooddatepicker</groupId>
 			<artifactId>LGoodDatePicker</artifactId>
 			<version>11.2.1</version>
-		</dependency>
-		
-		<!-- iText PDF for PDF generation -->
-		<dependency>
-			<groupId>com.itextpdf</groupId>
-			<artifactId>itextpdf</artifactId>
-			<version>5.5.13.3</version>
-		</dependency>
-		
-		<!-- JFreeChart for statistics visualization -->
-		<dependency>
-			<groupId>org.jfree</groupId>
-			<artifactId>jfreechart</artifactId>
-			<version>1.5.3</version>
 		</dependency>
 	</dependencies>
 

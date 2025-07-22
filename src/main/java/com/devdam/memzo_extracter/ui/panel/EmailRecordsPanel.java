@@ -6,27 +6,16 @@ import com.devdam.memzo_extracter.ui.model.EmailRecordsTableModel;
 import com.github.lgooddatepicker.components.DatePicker;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
-
-// iText 5 imports
-import com.itextpdf.text.*;
-import com.itextpdf.text.Font;
-import com.itextpdf.text.Rectangle;
-import com.itextpdf.text.pdf.*;
 
 public class EmailRecordsPanel extends JPanel {
     
@@ -97,26 +86,10 @@ public class EmailRecordsPanel extends JPanel {
         clearButton.addActionListener(this::clearFilters);
         filtersPanel.add(clearButton);
         
-        // Export panel - Updated to include both CSV and PDF
+        // Export panel
         JPanel exportPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        
-        JButton exportButton = new JButton("📤 Export");
-        exportButton.setPreferredSize(new Dimension(120, 30));
-        
-        JPopupMenu exportMenu = new JPopupMenu();
-        
-        JMenuItem csvExport = new JMenuItem("📊 Export as CSV");
-        csvExport.addActionListener(this::showExportDialog);
-        exportMenu.add(csvExport);
-        
-        JMenuItem pdfExport = new JMenuItem("📄 Export as PDF");
-        pdfExport.addActionListener(this::showPdfExportDialog);
-        exportMenu.add(pdfExport);
-        
-        exportButton.addActionListener(e -> {
-            exportMenu.show(exportButton, 0, exportButton.getHeight());
-        });
-        
+        JButton exportButton = new JButton("📤 Export Selected Fields");
+        exportButton.addActionListener(this::showExportDialog);
         exportPanel.add(exportButton);
         
         panel.add(filtersPanel, BorderLayout.CENTER);
@@ -243,11 +216,6 @@ public class EmailRecordsPanel extends JPanel {
             updateRecordCount(currentData.size());
         }
     }
-
-    // Add this method to update the record count label
-    private void updateRecordCount(int count) {
-        recordCountLabel.setText("Records: " + count);
-    }
     
     private void showExportDialog(ActionEvent e) {
         if (currentData == null || currentData.isEmpty()) {
@@ -272,32 +240,28 @@ public class EmailRecordsPanel extends JPanel {
         dialog.setVisible(true);
     }
     
-    private void showPdfExportDialog(ActionEvent e) {
-        if (currentData == null || currentData.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
-                "No data to export. Please load a CSV file first.", 
-                "Export Error", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        
-        // Get filtered data
-        List<SelfieDetail> dataToExport = getFilteredData();
-        
-        if (dataToExport.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
-                "No records match the current filters.", 
-                "Export Warning", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        
-        // Create field selection dialog
-        PdfExportDialog dialog = new PdfExportDialog(
-            SwingUtilities.getWindowAncestor(this), 
-            dataToExport
-        );
-        dialog.setVisible(true);
+    private void updateRecordCount(int count) {
+        recordCountLabel.setText("Records: " + count);
     }
-
+    
+    public void updateData(List<SelfieDetail> allData) {
+        if (allData == null) {
+            currentData = null;
+            tableModel.updateData(null);
+            updateRecordCount(0);
+            return;
+        }
+        
+        // Filter to only include records with valid email addresses
+        currentData = allData.stream()
+            .filter(record -> record.getEmail() != null && 
+                            !record.getEmail().trim().isEmpty())
+            .collect(Collectors.toList());
+        
+        tableModel.updateData(currentData);
+        updateRecordCount(currentData.size());
+    }
+    
     // Inner class for export dialog
     private class ExportFieldsDialog extends JDialog {
         private final List<SelfieDetail> dataToExport;
@@ -387,7 +351,7 @@ public class EmailRecordsPanel extends JPanel {
             // Show file chooser
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Save Export File");
-            fileChooser.setFileFilter(new FileNameExtensionFilter("CSV Files", "csv"));
+            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("CSV Files", "csv"));
             fileChooser.setSelectedFile(new File("email_records_export.csv"));
             
             if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -456,302 +420,4 @@ public class EmailRecordsPanel extends JPanel {
             }
         }
     }
-    
-    // Inner class for PDF export dialog
-    private static class PdfExportDialog extends JDialog {
-        private final List<SelfieDetail> data;
-        private final Map<String, JCheckBox> fieldCheckboxes;
-        private final JTextField titleField;
-        private final JCheckBox includeStatsCheckbox;
-        
-        public PdfExportDialog(Window parent, List<SelfieDetail> data) {
-            super(parent, "PDF Export Options", ModalityType.APPLICATION_MODAL);
-            this.data = data;
-            this.fieldCheckboxes = new LinkedHashMap<>();
-            this.titleField = new JTextField("Email Records Report", 20);
-            this.includeStatsCheckbox = new JCheckBox("Include Statistics Summary", true);
-            
-            initializeDialog();
-        }
-        
-        private void initializeDialog() {
-            setLayout(new BorderLayout(10, 10));
-            setSize(400, 500);
-            setLocationRelativeTo(getParent());
-            
-            // Title panel
-            JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            titlePanel.setBorder(BorderFactory.createTitledBorder("Report Title"));
-            titlePanel.add(new JLabel("Title:"));
-            titlePanel.add(titleField);
-            add(titlePanel, BorderLayout.NORTH);
-            
-            // Fields selection panel
-            JPanel fieldsPanel = createFieldsPanel();
-            add(new JScrollPane(fieldsPanel), BorderLayout.CENTER);
-            
-            // Options and buttons panel
-            JPanel bottomPanel = createBottomPanel();
-            add(bottomPanel, BorderLayout.SOUTH);
-        }
-        
-        private JPanel createFieldsPanel() {
-            JPanel panel = new JPanel();
-            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-            panel.setBorder(BorderFactory.createTitledBorder("Select Fields to Include"));
-            
-            String[] fieldNames = {"Email", "Name", "Phone", "Date", "Photos", "Image URL"};
-            String[] fieldKeys = {"email", "name", "contact", "date", "photos", "image"};
-            
-            for (int i = 0; i < fieldNames.length; i++) {
-                JCheckBox checkbox = new JCheckBox(fieldNames[i], true);
-                fieldCheckboxes.put(fieldKeys[i], checkbox);
-                panel.add(checkbox);
-            }
-            
-            // Select All / Deselect All buttons
-            JPanel selectPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            JButton selectAll = new JButton("Select All");
-            JButton deselectAll = new JButton("Deselect All");
-            
-            selectAll.addActionListener(e -> fieldCheckboxes.values().forEach(cb -> cb.setSelected(true)));
-            deselectAll.addActionListener(e -> fieldCheckboxes.values().forEach(cb -> cb.setSelected(false)));
-            
-            selectPanel.add(selectAll);
-            selectPanel.add(deselectAll);
-            panel.add(selectPanel);
-            
-            return panel;
-        }
-        
-        private JPanel createBottomPanel() {
-            JPanel panel = new JPanel(new BorderLayout(5, 5));
-            
-            // Options panel
-            JPanel optionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            optionsPanel.add(includeStatsCheckbox);
-            panel.add(optionsPanel, BorderLayout.CENTER);
-            
-            // Buttons panel
-            JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-            JButton exportButton = new JButton("📄 Export PDF");
-            JButton cancelButton = new JButton("Cancel");
-            
-            exportButton.addActionListener(this::exportToPdf);
-            cancelButton.addActionListener(e -> dispose());
-            
-            buttonsPanel.add(cancelButton);
-            buttonsPanel.add(exportButton);
-            panel.add(buttonsPanel, BorderLayout.SOUTH);
-            
-            return panel;
-        }
-        
-        private void exportToPdf(ActionEvent e) {
-            // Check if at least one field is selected
-            boolean anyFieldSelected = fieldCheckboxes.values().stream()
-                .anyMatch(JCheckBox::isSelected);
-                
-            if (!anyFieldSelected) {
-                JOptionPane.showMessageDialog(this, 
-                    "Please select at least one field to export.", 
-                    "Selection Error", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            
-            // Choose file location
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Save PDF Report");
-            fileChooser.setSelectedFile(new File("email_records_report.pdf"));
-            fileChooser.setFileFilter(new FileNameExtensionFilter("PDF files (*.pdf)", "pdf"));
-            
-            if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
-                if (!file.getName().toLowerCase().endsWith(".pdf")) {
-                    file = new File(file.getAbsolutePath() + ".pdf");
-                }
-                
-                try {
-                    createPdfReport(file);
-                    JOptionPane.showMessageDialog(this, 
-                        "PDF report exported successfully!\nLocation: " + file.getAbsolutePath(), 
-                        "Export Successful", JOptionPane.INFORMATION_MESSAGE);
-                    dispose();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(this, 
-                        "Error creating PDF: " + ex.getMessage(), 
-                        "Export Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        }
-        
-        private void createPdfReport(File file) throws Exception {
-            Document document = new Document(PageSize.A4);
-            PdfWriter.getInstance(document, new FileOutputStream(file));
-            document.open();
-            
-            // Add title
-            String title = titleField.getText().trim();
-            if (title.isEmpty()) title = "Email Records Report";
-            
-            com.itextpdf.text.Font titleFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 18, com.itextpdf.text.Font.BOLD);
-            Paragraph titleParagraph = new Paragraph(title, titleFont);
-            titleParagraph.setAlignment(Element.ALIGN_CENTER);
-            titleParagraph.setSpacingAfter(20);
-            document.add(titleParagraph);
-            
-            // Add generation date
-            com.itextpdf.text.Font dateFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 12);
-            Paragraph dateParagraph = new Paragraph("Report generated on: " + LocalDate.now().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy")), dateFont);
-            dateParagraph.setAlignment(Element.ALIGN_CENTER);
-            dateParagraph.setSpacingAfter(15);
-            document.add(dateParagraph);
-            
-            // Add statistics summary if requested
-            if (includeStatsCheckbox.isSelected()) {
-                addStatisticsSummary(document);
-            }
-            
-            // Add data table
-            addDataTable(document);
-            
-            // Add footer
-            com.itextpdf.text.Font footerFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 10);
-            Paragraph footer = new Paragraph("Total records in this report: " + data.size(), footerFont);
-            footer.setAlignment(Element.ALIGN_RIGHT);
-            footer.setSpacingBefore(20);
-            document.add(footer);
-            
-            document.close();
-        }
-        
-        private void addStatisticsSummary(Document document) throws DocumentException {
-            // Add statistics section
-            com.itextpdf.text.Font statsFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 14, com.itextpdf.text.Font.BOLD);
-            Paragraph statsTitle = new Paragraph("Statistics Summary", statsFont);
-            statsTitle.setSpacingBefore(20);
-            statsTitle.setSpacingAfter(10);
-            document.add(statsTitle);
-            
-            // Create stats table
-            PdfPTable statsTable = new PdfPTable(2);
-            statsTable.setWidthPercentage(50);
-            statsTable.setHorizontalAlignment(Element.ALIGN_LEFT);
-            
-            com.itextpdf.text.Font labelFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 10, com.itextpdf.text.Font.BOLD);
-            com.itextpdf.text.Font valueFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 10);
-            
-            // Add stats data
-            addStatsRow(statsTable, "Total Records", String.valueOf(data.size()), labelFont, valueFont);
-            
-            long withValidEmail = data.stream()
-                .filter(record -> record.getEmail() != null && !record.getEmail().trim().isEmpty())
-                .count();
-            addStatsRow(statsTable, "Records with Email", String.valueOf(withValidEmail), labelFont, valueFont);
-            
-            long withPhone = data.stream()
-                .filter(record -> record.getContact() != null && !record.getContact().trim().isEmpty())
-                .count();
-            addStatsRow(statsTable, "Records with Phone", String.valueOf(withPhone), labelFont, valueFont);
-            
-            int totalPhotos = data.stream()
-                .filter(record -> record.getPhotos() != null)
-                .mapToInt(SelfieDetail::getPhotos)
-                .sum();
-            addStatsRow(statsTable, "Total Photos", String.valueOf(totalPhotos), labelFont, valueFont);
-            
-            document.add(statsTable);
-            document.add(Chunk.NEWLINE);
-        }
-        
-        private void addStatsRow(PdfPTable table, String label, String value, com.itextpdf.text.Font labelFont, com.itextpdf.text.Font valueFont) {
-            PdfPCell labelCell = new PdfPCell(new Phrase(label, labelFont));
-            labelCell.setBorder(Rectangle.NO_BORDER);
-            table.addCell(labelCell);
-            
-            PdfPCell valueCell = new PdfPCell(new Phrase(value, valueFont));
-            valueCell.setBorder(Rectangle.NO_BORDER);
-            table.addCell(valueCell);
-        }
-        
-        private void addDataTable(Document document) throws DocumentException {
-            // Count selected fields
-            List<String> selectedFields = fieldCheckboxes.entrySet().stream()
-                .filter(entry -> entry.getValue().isSelected())
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-            
-            if (selectedFields.isEmpty()) return;
-            
-            // Add data section title
-            com.itextpdf.text.Font dataFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 14, com.itextpdf.text.Font.BOLD);
-            Paragraph dataTitle = new Paragraph("Email Records Data", dataFont);
-            dataTitle.setSpacingBefore(20);
-            dataTitle.setSpacingAfter(10);
-            document.add(dataTitle);
-            
-            // Create data table
-            PdfPTable dataTable = new PdfPTable(selectedFields.size());
-            dataTable.setWidthPercentage(100);
-            dataTable.setSpacingBefore(10);
-            
-            com.itextpdf.text.Font headerFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 10, com.itextpdf.text.Font.BOLD);
-            com.itextpdf.text.Font cellFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 9);
-            
-            // Add headers
-            for (String field : selectedFields) {
-                String headerText = getFieldDisplayName(field);
-                PdfPCell headerCell = new PdfPCell(new Phrase(headerText, headerFont));
-                headerCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
-                headerCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                headerCell.setPadding(8);
-                dataTable.addCell(headerCell);
-            }
-            
-            // Add data rows
-            for (SelfieDetail record : data) {
-                for (String field : selectedFields) {
-                    String value = getFieldValue(record, field);
-                    PdfPCell cell = new PdfPCell(new Phrase(value, cellFont));
-                    cell.setPadding(5);
-                    dataTable.addCell(cell);
-                }
-            }
-            
-            document.add(dataTable);
-        }
-        
-        private String getFieldDisplayName(String field) {
-            switch (field) {
-                case "email": return "Email";
-                case "name": return "Name";
-                case "contact": return "Phone";
-                case "date": return "Date";
-                case "photos": return "Photos";
-                case "image": return "Image URL";
-                default: return field;
-            }
-        }
-        
-        private String getFieldValue(SelfieDetail record, String field) {
-            switch (field) {
-                case "email":
-                    return record.getEmail() != null ? record.getEmail() : "";
-                case "name":
-                    return record.getName() != null ? record.getName() : "";
-                case "contact":
-                    return record.getContact() != null ? record.getContact() : "";
-                case "date":
-                    return record.getDate() != null ? record.getDate() : "";
-                case "photos":
-                    return record.getPhotos() != null ? record.getPhotos().toString() : "0";
-                case "image":
-                    return record.getImage() != null ? record.getImage() : "";
-                default:
-                    return "";
-            }
-        }
-    }
-    
 }
