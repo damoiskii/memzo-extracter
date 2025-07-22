@@ -190,8 +190,8 @@ public class BlurredModalOverlay {
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
             
             // Draw multiple offset copies for blur effect
-            for (int x = -2; x <= 2; x++) {
-                for (int y = -2; y <= 2; y++) {
+            for (int x = BLUR_OFFSET_MIN; x <= BLUR_OFFSET_MAX; x++) {
+                for (int y = BLUR_OFFSET_MIN; y <= BLUR_OFFSET_MAX; y++) {
                     g2d.drawImage(source, x, y, null);
                 }
             }
