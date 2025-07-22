@@ -288,7 +288,7 @@ public class EmailRecordsPanel extends JPanel {
         
         private void initializeDialog() {
             setLayout(new BorderLayout(10, 10));
-            setSize(500, 350);  // Increased width to accommodate all buttons
+            setSize(DIALOG_WIDTH, DIALOG_HEIGHT);  // Increased width to accommodate all buttons
             setLocationRelativeTo(getParent());
             
             // Create field selection panel
