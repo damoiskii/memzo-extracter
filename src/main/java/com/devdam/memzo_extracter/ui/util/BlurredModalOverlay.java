@@ -186,8 +186,7 @@ public class BlurredModalOverlay {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             
             // Simple blur by drawing the image slightly scaled and with transparency
-            float alpha = 0.15f;
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, ALPHA_VALUE));
             
             // Draw multiple offset copies for blur effect
             for (int x = BLUR_OFFSET_MIN; x <= BLUR_OFFSET_MAX; x++) {
