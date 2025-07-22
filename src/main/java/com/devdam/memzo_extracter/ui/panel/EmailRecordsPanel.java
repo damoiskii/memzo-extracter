@@ -3,7 +3,6 @@ package com.devdam.memzo_extracter.ui.panel;
 import com.devdam.memzo_extracter.model.SelfieDetail;
 import com.devdam.memzo_extracter.service.CsvService;
 import com.devdam.memzo_extracter.ui.model.EmailRecordsTableModel;
-import com.devdam.memzo_extracter.ui.util.ModalBackdrop;
 import com.github.lgooddatepicker.components.DatePicker;
 
 import javax.swing.*;
@@ -226,7 +225,7 @@ public class EmailRecordsPanel extends JPanel {
     
     private void showExportDialog(ActionEvent e) {
         if (currentData == null || currentData.isEmpty()) {
-            ModalBackdrop.showMessageDialogWithBackdrop(this, 
+            JOptionPane.showMessageDialog(this, 
                 "No data to export. Please load a CSV file first.", 
                 "Export Error", JOptionPane.WARNING_MESSAGE);
             return;
@@ -235,7 +234,7 @@ public class EmailRecordsPanel extends JPanel {
         // Apply the same filtering logic as the table display
         List<SelfieDetail> filteredData = getFilteredData();
         if (filteredData.isEmpty()) {
-            ModalBackdrop.showMessageDialogWithBackdrop(this, 
+            JOptionPane.showMessageDialog(this, 
                 "No records match the current filters.", 
                 "Export Error", JOptionPane.WARNING_MESSAGE);
             return;
@@ -244,7 +243,7 @@ public class EmailRecordsPanel extends JPanel {
         // Show field selection dialog
         ExportFieldsDialog dialog = new ExportFieldsDialog(
             SwingUtilities.getWindowAncestor(this), filteredData);
-        ModalBackdrop.showDialogWithBackdrop(SwingUtilities.getWindowAncestor(this), dialog);
+        dialog.setVisible(true);
     }
     
     private void updateRecordCount(int count) {
@@ -353,7 +352,7 @@ public class EmailRecordsPanel extends JPanel {
             }
             
             if (!anySelected) {
-                ModalBackdrop.showMessageDialogWithBackdrop(this, 
+                JOptionPane.showMessageDialog(this, 
                     "Please select at least one field to export.", 
                     "Export Error", JOptionPane.WARNING_MESSAGE);
                 return;
@@ -370,7 +369,7 @@ public class EmailRecordsPanel extends JPanel {
             fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(description, extension));
             fileChooser.setSelectedFile(new File(defaultFileName));
             
-            if (ModalBackdrop.showFileChooserWithBackdrop(this, fileChooser, false) == JFileChooser.APPROVE_OPTION) {
+            if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
                 File file = fileChooser.getSelectedFile();
                 if (!file.getName().toLowerCase().endsWith("." + extension)) {
                     file = new File(file.getAbsolutePath() + "." + extension);
@@ -382,12 +381,12 @@ public class EmailRecordsPanel extends JPanel {
                     } else {
                         exportToCsv(file);
                     }
-                    ModalBackdrop.showMessageDialogWithBackdrop(this, 
+                    JOptionPane.showMessageDialog(this, 
                         "Export completed successfully!\nFile saved: " + file.getAbsolutePath(), 
                         "Export Success", JOptionPane.INFORMATION_MESSAGE);
                     dispose();
                 } catch (Exception ex) {
-                    ModalBackdrop.showMessageDialogWithBackdrop(this, 
+                    JOptionPane.showMessageDialog(this, 
                         "Error exporting file: " + ex.getMessage(), 
                         "Export Error", JOptionPane.ERROR_MESSAGE);
                 }
