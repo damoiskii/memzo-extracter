@@ -3,6 +3,7 @@ package com.devdam.memzo_extracter.ui.panel;
 import com.devdam.memzo_extracter.model.SelfieDetail;
 import com.devdam.memzo_extracter.service.CsvService;
 import com.devdam.memzo_extracter.ui.model.SelfieDetailsTableModel;
+import com.devdam.memzo_extracter.ui.util.BlurredModalOverlay;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -198,7 +199,7 @@ public class DataPanel extends JPanel {
         fileChooser.setFileFilter(new FileNameExtensionFilter("CSV Files", "csv"));
         fileChooser.setAcceptAllFileFilterUsed(false);
         
-        int result = fileChooser.showOpenDialog(this);
+        int result = BlurredModalOverlay.showFileChooserWithBlurredOverlay(this, fileChooser, true);
         if (result == JFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();
             loadCsvFile(selectedFile);
@@ -227,13 +228,13 @@ public class DataPanel extends JPanel {
                     }
                     
                     // Show success message
-                    JOptionPane.showMessageDialog(DataPanel.this, 
+                    BlurredModalOverlay.showMessageDialogWithBlurredOverlay(DataPanel.this, 
                             String.format("Successfully loaded %d records!", data.size()),
                             "Success", JOptionPane.INFORMATION_MESSAGE);
                             
                 } catch (Exception ex) {
                     statusLabel.setText("Error loading CSV file");
-                    JOptionPane.showMessageDialog(DataPanel.this, 
+                    BlurredModalOverlay.showMessageDialogWithBlurredOverlay(DataPanel.this, 
                             "Error loading CSV file: " + ex.getMessage(),
                             "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -255,7 +256,7 @@ public class DataPanel extends JPanel {
     private void exportToCsv(ActionEvent e) {
         List<SelfieDetail> data = tableModel.getData();
         if (data == null || data.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
+            BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                 "No data to export. Please load a CSV file first.", 
                 "Export Error", JOptionPane.WARNING_MESSAGE);
             return;
@@ -266,7 +267,7 @@ public class DataPanel extends JPanel {
         fileChooser.setFileFilter(new FileNameExtensionFilter("CSV Files", "csv"));
         fileChooser.setSelectedFile(new File("selfie_details_export.csv"));
         
-        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+        if (BlurredModalOverlay.showFileChooserWithBlurredOverlay(this, fileChooser, false) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             if (!file.getName().toLowerCase().endsWith(".csv")) {
                 file = new File(file.getAbsolutePath() + ".csv");
@@ -274,11 +275,11 @@ public class DataPanel extends JPanel {
             
             try {
                 exportToCsvFile(file, data);
-                JOptionPane.showMessageDialog(this, 
+                BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                     "CSV export completed successfully!\nFile saved: " + file.getAbsolutePath(), 
                     "Export Success", JOptionPane.INFORMATION_MESSAGE);
             } catch (IOException ex) {
-                JOptionPane.showMessageDialog(this, 
+                BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                     "Error exporting CSV: " + ex.getMessage(), 
                     "Export Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -288,7 +289,7 @@ public class DataPanel extends JPanel {
     private void exportToPdf(ActionEvent e) {
         List<SelfieDetail> data = tableModel.getData();
         if (data == null || data.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
+            BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                 "No data to export. Please load a CSV file first.", 
                 "Export Error", JOptionPane.WARNING_MESSAGE);
             return;
@@ -299,7 +300,7 @@ public class DataPanel extends JPanel {
         fileChooser.setFileFilter(new FileNameExtensionFilter("PDF Files", "pdf"));
         fileChooser.setSelectedFile(new File("selfie_details_report.pdf"));
         
-        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+        if (BlurredModalOverlay.showFileChooserWithBlurredOverlay(this, fileChooser, false) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             if (!file.getName().toLowerCase().endsWith(".pdf")) {
                 file = new File(file.getAbsolutePath() + ".pdf");
@@ -307,11 +308,11 @@ public class DataPanel extends JPanel {
             
             try {
                 exportToPdfFile(file, data);
-                JOptionPane.showMessageDialog(this, 
+                BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                     "PDF export completed successfully!\nFile saved: " + file.getAbsolutePath(), 
                     "Export Success", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, 
+                BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                     "Error exporting PDF: " + ex.getMessage(), 
                     "Export Error", JOptionPane.ERROR_MESSAGE);
             }

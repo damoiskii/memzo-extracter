@@ -3,6 +3,7 @@ package com.devdam.memzo_extracter.ui.panel;
 import com.devdam.memzo_extracter.model.SelfieDetail;
 import com.devdam.memzo_extracter.service.CsvService;
 import com.devdam.memzo_extracter.ui.model.EmailRecordsTableModel;
+import com.devdam.memzo_extracter.ui.util.BlurredModalOverlay;
 import com.github.lgooddatepicker.components.DatePicker;
 
 import javax.swing.*;
@@ -225,7 +226,7 @@ public class EmailRecordsPanel extends JPanel {
     
     private void showExportDialog(ActionEvent e) {
         if (currentData == null || currentData.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
+            BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                 "No data to export. Please load a CSV file first.", 
                 "Export Error", JOptionPane.WARNING_MESSAGE);
             return;
@@ -234,7 +235,7 @@ public class EmailRecordsPanel extends JPanel {
         // Apply the same filtering logic as the table display
         List<SelfieDetail> filteredData = getFilteredData();
         if (filteredData.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
+            BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                 "No records match the current filters.", 
                 "Export Error", JOptionPane.WARNING_MESSAGE);
             return;
@@ -243,7 +244,7 @@ public class EmailRecordsPanel extends JPanel {
         // Show field selection dialog
         ExportFieldsDialog dialog = new ExportFieldsDialog(
             SwingUtilities.getWindowAncestor(this), filteredData);
-        dialog.setVisible(true);
+        BlurredModalOverlay.showDialogWithBlurredOverlay(SwingUtilities.getWindowAncestor(this), dialog);
     }
     
     private void updateRecordCount(int count) {
@@ -352,7 +353,7 @@ public class EmailRecordsPanel extends JPanel {
             }
             
             if (!anySelected) {
-                JOptionPane.showMessageDialog(this, 
+                BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                     "Please select at least one field to export.", 
                     "Export Error", JOptionPane.WARNING_MESSAGE);
                 return;
@@ -369,7 +370,7 @@ public class EmailRecordsPanel extends JPanel {
             fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(description, extension));
             fileChooser.setSelectedFile(new File(defaultFileName));
             
-            if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            if (BlurredModalOverlay.showFileChooserWithBlurredOverlay(this, fileChooser, false) == JFileChooser.APPROVE_OPTION) {
                 File file = fileChooser.getSelectedFile();
                 if (!file.getName().toLowerCase().endsWith("." + extension)) {
                     file = new File(file.getAbsolutePath() + "." + extension);
@@ -381,12 +382,12 @@ public class EmailRecordsPanel extends JPanel {
                     } else {
                         exportToCsv(file);
                     }
-                    JOptionPane.showMessageDialog(this, 
+                    BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                         "Export completed successfully!\nFile saved: " + file.getAbsolutePath(), 
                         "Export Success", JOptionPane.INFORMATION_MESSAGE);
                     dispose();
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, 
+                    BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                         "Error exporting file: " + ex.getMessage(), 
                         "Export Error", JOptionPane.ERROR_MESSAGE);
                 }
