@@ -85,7 +85,7 @@ public class MainWindow extends JFrame {
         uploadItem.setAccelerator(KeyStroke.getKeyStroke("ctrl O"));
         uploadItem.addActionListener(e -> {
             tabbedPane.setSelectedIndex(0); // Switch to data tab
-            // Trigger upload in data panel - we'll need to expose this method
+            dataPanel.triggerFileUpload(); // Now we can call the exposed method
         });
         
         JMenuItem exitItem = new JMenuItem("Exit");
@@ -174,8 +174,15 @@ public class MainWindow extends JFrame {
     
     private void refreshStatistics() {
         // Get current data from data panel and update statistics
-        if (dataPanel != null) {
-            statsPanel.updateStats(dataPanel.getCurrentData());
+        try {
+            List<SelfieDetail> currentData = dataPanel.getCurrentData();
+            if (currentData != null && !currentData.isEmpty()) {
+                statsPanel.updateStats(currentData);
+                emailRecordsPanel.updateData(currentData);
+            }
+        } catch (Exception ex) {
+            // Handle case where getCurrentData might not be available yet
+            System.out.println("No data available for statistics refresh");
         }
     }
     
