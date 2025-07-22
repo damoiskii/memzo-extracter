@@ -3,6 +3,7 @@ package com.devdam.memzo_extracter.ui.panel;
 import com.devdam.memzo_extracter.model.SelfieDetail;
 import com.devdam.memzo_extracter.service.CsvService;
 import com.devdam.memzo_extracter.ui.model.EmailRecordsTableModel;
+import com.devdam.memzo_extracter.ui.util.BlurredModalOverlay;
 import com.github.lgooddatepicker.components.DatePicker;
 
 import javax.swing.*;
@@ -16,6 +17,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
 
 public class EmailRecordsPanel extends JPanel {
     
@@ -219,7 +226,7 @@ public class EmailRecordsPanel extends JPanel {
     
     private void showExportDialog(ActionEvent e) {
         if (currentData == null || currentData.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
+            BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                 "No data to export. Please load a CSV file first.", 
                 "Export Error", JOptionPane.WARNING_MESSAGE);
             return;
@@ -228,7 +235,7 @@ public class EmailRecordsPanel extends JPanel {
         // Apply the same filtering logic as the table display
         List<SelfieDetail> filteredData = getFilteredData();
         if (filteredData.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
+            BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                 "No records match the current filters.", 
                 "Export Error", JOptionPane.WARNING_MESSAGE);
             return;
@@ -237,7 +244,7 @@ public class EmailRecordsPanel extends JPanel {
         // Show field selection dialog
         ExportFieldsDialog dialog = new ExportFieldsDialog(
             SwingUtilities.getWindowAncestor(this), filteredData);
-        dialog.setVisible(true);
+        BlurredModalOverlay.showDialogWithBlurredOverlay(SwingUtilities.getWindowAncestor(this), dialog);
     }
     
     private void updateRecordCount(int count) {
@@ -281,7 +288,7 @@ public class EmailRecordsPanel extends JPanel {
         
         private void initializeDialog() {
             setLayout(new BorderLayout(10, 10));
-            setSize(400, 350);
+            setSize(DIALOG_WIDTH, DIALOG_HEIGHT);  // Increased width to accommodate all buttons
             setLocationRelativeTo(getParent());
             
             // Create field selection panel
@@ -316,8 +323,11 @@ public class EmailRecordsPanel extends JPanel {
                 }
             });
             
-            JButton exportButton = new JButton("Export");
-            exportButton.addActionListener(this::performExport);
+            JButton exportCsvButton = new JButton("📊 Export CSV");
+            exportCsvButton.addActionListener(e -> performExport("csv"));
+            
+            JButton exportPdfButton = new JButton("📄 Export PDF");
+            exportPdfButton.addActionListener(e -> performExport("pdf"));
             
             JButton cancelButton = new JButton("Cancel");
             cancelButton.addActionListener(e -> dispose());
@@ -325,13 +335,14 @@ public class EmailRecordsPanel extends JPanel {
             buttonsPanel.add(selectAllButton);
             buttonsPanel.add(selectNoneButton);
             buttonsPanel.add(Box.createHorizontalStrut(20));
-            buttonsPanel.add(exportButton);
+            buttonsPanel.add(exportCsvButton);
+            buttonsPanel.add(exportPdfButton);
             buttonsPanel.add(cancelButton);
             
             add(buttonsPanel, BorderLayout.SOUTH);
         }
         
-        private void performExport(ActionEvent e) {
+        private void performExport(String format) {
             // Check if any fields are selected
             boolean anySelected = false;
             for (JCheckBox cb : fieldCheckboxes) {
@@ -342,7 +353,7 @@ public class EmailRecordsPanel extends JPanel {
             }
             
             if (!anySelected) {
-                JOptionPane.showMessageDialog(this, 
+                BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                     "Please select at least one field to export.", 
                     "Export Error", JOptionPane.WARNING_MESSAGE);
                 return;
@@ -351,30 +362,39 @@ public class EmailRecordsPanel extends JPanel {
             // Show file chooser
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Save Export File");
-            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("CSV Files", "csv"));
-            fileChooser.setSelectedFile(new File("email_records_export.csv"));
             
-            if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            String extension = format.equals("pdf") ? "pdf" : "csv";
+            String description = format.equals("pdf") ? "PDF Files" : "CSV Files";
+            String defaultFileName = format.equals("pdf") ? "email_records_export.pdf" : "email_records_export.csv";
+            
+            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(description, extension));
+            fileChooser.setSelectedFile(new File(defaultFileName));
+            
+            if (BlurredModalOverlay.showFileChooserWithBlurredOverlay(this, fileChooser, false) == JFileChooser.APPROVE_OPTION) {
                 File file = fileChooser.getSelectedFile();
-                if (!file.getName().toLowerCase().endsWith(".csv")) {
-                    file = new File(file.getAbsolutePath() + ".csv");
+                if (!file.getName().toLowerCase().endsWith("." + extension)) {
+                    file = new File(file.getAbsolutePath() + "." + extension);
                 }
                 
                 try {
-                    exportToFile(file);
-                    JOptionPane.showMessageDialog(this, 
+                    if (format.equals("pdf")) {
+                        exportToPdf(file);
+                    } else {
+                        exportToCsv(file);
+                    }
+                    BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                         "Export completed successfully!\nFile saved: " + file.getAbsolutePath(), 
                         "Export Success", JOptionPane.INFORMATION_MESSAGE);
                     dispose();
-                } catch (IOException ex) {
-                    JOptionPane.showMessageDialog(this, 
+                } catch (Exception ex) {
+                    BlurredModalOverlay.showMessageDialogWithBlurredOverlay(this, 
                         "Error exporting file: " + ex.getMessage(), 
                         "Export Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
         
-        private void exportToFile(File file) throws IOException {
+        private void exportToCsv(File file) throws IOException {
             try (FileWriter writer = new FileWriter(file)) {
                 // Write header
                 boolean first = true;
@@ -401,6 +421,70 @@ public class EmailRecordsPanel extends JPanel {
                     }
                     writer.write("\n");
                 }
+            }
+        }
+        
+        private void exportToPdf(File file) throws Exception {
+            com.itextpdf.text.Document document = new com.itextpdf.text.Document();
+            
+            try {
+                PdfWriter.getInstance(document, new java.io.FileOutputStream(file));
+                document.open();
+                
+                // Add title
+                com.itextpdf.text.Paragraph title = new com.itextpdf.text.Paragraph("Email Records Export Report");
+                title.setAlignment(Element.ALIGN_CENTER);
+                title.setSpacingAfter(20);
+                document.add(title);
+                
+                // Add export date
+                com.itextpdf.text.Paragraph exportDate = new com.itextpdf.text.Paragraph(
+                    "Export Date: " + java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                exportDate.setSpacingAfter(10);
+                document.add(exportDate);
+                
+                // Add record count
+                com.itextpdf.text.Paragraph recordCount = new com.itextpdf.text.Paragraph(
+                    "Total Records: " + dataToExport.size());
+                recordCount.setSpacingAfter(20);
+                document.add(recordCount);
+                
+                // Count selected columns
+                int selectedColumns = 0;
+                for (JCheckBox cb : fieldCheckboxes) {
+                    if (cb.isSelected()) selectedColumns++;
+                }
+                
+                // Create table
+                PdfPTable table = new PdfPTable(selectedColumns);
+                table.setWidthPercentage(100);
+                
+                // Add headers
+                for (int i = 0; i < fieldCheckboxes.length; i++) {
+                    if (fieldCheckboxes[i].isSelected()) {
+                        PdfPCell headerCell = new PdfPCell(new Phrase(fieldNames[i]));
+                        headerCell.setBackgroundColor(com.itextpdf.text.BaseColor.LIGHT_GRAY);
+                        headerCell.setPadding(8);
+                        table.addCell(headerCell);
+                    }
+                }
+                
+                // Add data rows
+                for (SelfieDetail record : dataToExport) {
+                    for (int i = 0; i < fieldCheckboxes.length; i++) {
+                        if (fieldCheckboxes[i].isSelected()) {
+                            String value = getFieldValue(record, i);
+                            PdfPCell cell = new PdfPCell(new Phrase(value != null ? value : ""));
+                            cell.setPadding(5);
+                            table.addCell(cell);
+                        }
+                    }
+                }
+                
+                document.add(table);
+                
+            } finally {
+                document.close();
             }
         }
         
