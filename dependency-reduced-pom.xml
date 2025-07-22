@@ -57,6 +57,7 @@
             <configuration>
               <shadedArtifactAttached>true</shadedArtifactAttached>
               <shadedClassifierName>ui</shadedClassifierName>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
               <transformers>
                 <transformer>
                   <mainClass>com.devdam.memzo_extracter.ui.ApplicationLauncher</mainClass>
@@ -78,6 +79,7 @@
                     <exclude>META-INF/*.SF</exclude>
                     <exclude>META-INF/*.DSA</exclude>
                     <exclude>META-INF/*.RSA</exclude>
+                    <exclude>BOOT-INF/**</exclude>
                   </excludes>
                 </filter>
               </filters>
@@ -199,6 +201,12 @@
       <groupId>com.github.lgooddatepicker</groupId>
       <artifactId>LGoodDatePicker</artifactId>
       <version>11.2.1</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.itextpdf</groupId>
+      <artifactId>itextpdf</artifactId>
+      <version>5.5.13.3</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>
