@@ -15,6 +15,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -274,13 +275,17 @@ public class EmailRecordsPanel extends JPanel {
         private final List<SelfieDetail> dataToExport;
         private final JCheckBox[] fieldCheckboxes;
         private final String[] fieldNames = {
-            "Row ID", "Email", "Contact", "Date", "Name", 
+            "Name", "Email", "Contact", "Date", "Row ID",
             "Photos", "Image", "Download Requests", "Photos Shared", "Photos Download"
         };
         
+        // Dialog size constants
+        private static final int DIALOG_WIDTH = 600;
+        private static final int DIALOG_HEIGHT = 500;
+
         public ExportFieldsDialog(Window parent, List<SelfieDetail> data) {
             super(parent, "Select Fields to Export", ModalityType.APPLICATION_MODAL);
-            this.dataToExport = data;
+            this.dataToExport = removeDuplicatesByEmail(data);
             this.fieldCheckboxes = new JCheckBox[fieldNames.length];
             
             initializeDialog();
@@ -297,8 +302,8 @@ public class EmailRecordsPanel extends JPanel {
             
             for (int i = 0; i < fieldNames.length; i++) {
                 fieldCheckboxes[i] = new JCheckBox(fieldNames[i]);
-                // Pre-select email and contact by default
-                if (fieldNames[i].equals("Email") || fieldNames[i].equals("Contact")) {
+                // Pre-select name, email and contact by default
+                if (fieldNames[i].equals("Name") || fieldNames[i].equals("Email") || fieldNames[i].equals("Contact")) {
                     fieldCheckboxes[i].setSelected(true);
                 }
                 fieldsPanel.add(fieldCheckboxes[i]);
@@ -490,18 +495,69 @@ public class EmailRecordsPanel extends JPanel {
         
         private String getFieldValue(SelfieDetail record, int fieldIndex) {
             switch (fieldIndex) {
-                case 0: return String.valueOf(fieldIndex + 1); // Row ID (simple counter)
-                case 1: return record.getEmail();
-                case 2: return record.getContact();
-                case 3: return record.getDate();
-                case 4: return record.getName();
-                case 5: return record.getPhotos() != null ? record.getPhotos().toString() : "";
-                case 6: return record.getImageFilename();
-                case 7: return record.getDownloadRequests();
-                case 8: return record.getPhotosShared();
-                case 9: return record.getPhotosDownload();
+                case 0: return toTitleCase(record.getName()); // Name (with title case)
+                case 1: return record.getEmail(); // Email
+                case 2: return record.getContact(); // Contact
+                case 3: return record.getDate(); // Date
+                case 4: return String.valueOf(fieldIndex + 1); // Row ID (simple counter)
+                case 5: return record.getPhotos() != null ? record.getPhotos().toString() : ""; // Photos
+                case 6: return record.getImageFilename(); // Image
+                case 7: return record.getDownloadRequests(); // Download Requests
+                case 8: return record.getPhotosShared(); // Photos Shared
+                case 9: return record.getPhotosDownload(); // Photos Download
                 default: return "";
             }
+        }
+        
+        /**
+         * Removes duplicate records based on email address, keeping the first occurrence
+         */
+        private List<SelfieDetail> removeDuplicatesByEmail(List<SelfieDetail> data) {
+            if (data == null) return null;
+            
+            Set<String> seenEmails = new HashSet<>();
+            List<SelfieDetail> uniqueRecords = new ArrayList<>();
+            
+            for (SelfieDetail record : data) {
+                String email = record.getEmail();
+                if (email != null && !email.trim().isEmpty()) {
+                    String normalizedEmail = email.trim().toLowerCase();
+                    if (!seenEmails.contains(normalizedEmail)) {
+                        seenEmails.add(normalizedEmail);
+                        uniqueRecords.add(record);
+                    }
+                }
+            }
+            
+            return uniqueRecords;
+        }
+        
+        /**
+         * Converts a string to title case (first letter of each word capitalized)
+         */
+        private String toTitleCase(String input) {
+            if (input == null || input.trim().isEmpty()) {
+                return input;
+            }
+            
+            String[] words = input.trim().toLowerCase().split("\\s+");
+            StringBuilder titleCase = new StringBuilder();
+            
+            for (int i = 0; i < words.length; i++) {
+                if (i > 0) {
+                    titleCase.append(" ");
+                }
+                
+                String word = words[i];
+                if (word.length() > 0) {
+                    titleCase.append(Character.toUpperCase(word.charAt(0)));
+                    if (word.length() > 1) {
+                        titleCase.append(word.substring(1));
+                    }
+                }
+            }
+            
+            return titleCase.toString();
         }
     }
 }
