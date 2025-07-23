@@ -17,7 +17,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.function.Consumer;
 
 // iText imports for PDF generation
@@ -319,16 +323,62 @@ public class DataPanel extends JPanel {
         }
     }
     
+    // Utility method to convert string to title case
+    private String toTitleCase(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            return input;
+        }
+        
+        String[] words = input.trim().toLowerCase().split("\\s+");
+        StringBuilder titleCase = new StringBuilder();
+        
+        for (int i = 0; i < words.length; i++) {
+            if (i > 0) {
+                titleCase.append(" ");
+            }
+            if (words[i].length() > 0) {
+                titleCase.append(Character.toUpperCase(words[i].charAt(0)));
+                if (words[i].length() > 1) {
+                    titleCase.append(words[i].substring(1));
+                }
+            }
+        }
+        
+        return titleCase.toString();
+    }
+    
+    // Utility method to remove duplicate records by email
+    private List<SelfieDetail> removeDuplicatesByEmail(List<SelfieDetail> data) {
+        Set<String> seenEmails = new HashSet<>();
+        List<SelfieDetail> uniqueData = new ArrayList<>();
+        
+        for (SelfieDetail record : data) {
+            String email = record.getEmail();
+            if (email != null && !email.trim().isEmpty() && !seenEmails.contains(email.toLowerCase())) {
+                seenEmails.add(email.toLowerCase());
+                uniqueData.add(record);
+            } else if (email == null || email.trim().isEmpty()) {
+                // Keep records without email as they're not duplicates
+                uniqueData.add(record);
+            }
+        }
+        
+        return uniqueData;
+    }
+
     private void exportToCsvFile(File file, List<SelfieDetail> data) throws IOException {
+        // Remove duplicates by email and keep unique records
+        List<SelfieDetail> uniqueData = removeDuplicatesByEmail(data);
+        
         try (FileWriter writer = new FileWriter(file)) {
-            // Write header
-            writer.write("Email,Name,Contact,Date,Photos,Image,Download Requests,Photos Shared,Photos Download\n");
+            // Write header with Name first
+            writer.write("Name,Email,Contact,Date,Photos,Image,Download Requests,Photos Shared,Photos Download\n");
             
             // Write data
-            for (SelfieDetail record : data) {
+            for (SelfieDetail record : uniqueData) {
                 writer.write(String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                    toTitleCase(record.getName()) != null ? toTitleCase(record.getName()) : "",
                     record.getEmail() != null ? record.getEmail() : "",
-                    record.getName() != null ? record.getName() : "",
                     record.getContact() != null ? record.getContact() : "",
                     record.getDate() != null ? record.getDate() : "",
                     record.getPhotos() != null ? record.getPhotos().toString() : "0",
@@ -342,6 +392,9 @@ public class DataPanel extends JPanel {
     }
     
     private void exportToPdfFile(File file, List<SelfieDetail> data) throws Exception {
+        // Remove duplicates by email and keep unique records
+        List<SelfieDetail> uniqueData = removeDuplicatesByEmail(data);
+        
         Document document = new Document(PageSize.A4.rotate()); // Landscape for better table fit
         PdfWriter.getInstance(document, new FileOutputStream(file));
         document.open();
@@ -361,7 +414,7 @@ public class DataPanel extends JPanel {
         document.add(dateInfo);
         
         // Add summary
-        Paragraph summary = new Paragraph("Total Records: " + data.size(), dateFont);
+        Paragraph summary = new Paragraph("Total Unique Records: " + uniqueData.size(), dateFont);
         summary.setSpacingAfter(15);
         document.add(summary);
         
@@ -371,32 +424,12 @@ public class DataPanel extends JPanel {
         table.setSpacingBefore(10);
         
         // Set column widths
-        final float EMAIL_COLUMN_WIDTH = 2f;
-        final float NAME_COLUMN_WIDTH = 2f;
-        final float CONTACT_COLUMN_WIDTH = 2f;
-        final float DATE_COLUMN_WIDTH = 1.5f;
-        final float PHOTOS_COLUMN_WIDTH = 1f;
-        final float IMAGE_COLUMN_WIDTH = 2f;
-        final float DOWNLOADS_COLUMN_WIDTH = 1.5f;
-        final float SHARED_COLUMN_WIDTH = 1.5f;
-        final float DOWNLOADED_COLUMN_WIDTH = 1.5f;
-        
-        float[] columnWidths = {
-            EMAIL_COLUMN_WIDTH,
-            NAME_COLUMN_WIDTH,
-            CONTACT_COLUMN_WIDTH,
-            DATE_COLUMN_WIDTH,
-            PHOTOS_COLUMN_WIDTH,
-            IMAGE_COLUMN_WIDTH,
-            DOWNLOADS_COLUMN_WIDTH,
-            SHARED_COLUMN_WIDTH,
-            DOWNLOADED_COLUMN_WIDTH
-        };
+        float[] columnWidths = {2f, 2f, 2f, 1.5f, 1f, 2f, 1.5f, 1.5f, 1.5f};
         table.setWidths(columnWidths);
         
-        // Add headers
+        // Add headers with Name first
         com.itextpdf.text.Font headerFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 10, com.itextpdf.text.Font.BOLD);
-        String[] headers = {"Email", "Name", "Contact", "Date", "Photos", "Image", "Downloads", "Shared", "Downloaded"};
+        String[] headers = {"Name", "Email", "Contact", "Date", "Photos", "Image", "Downloads", "Shared", "Downloaded"};
         
         for (String header : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(header, headerFont));
@@ -406,11 +439,11 @@ public class DataPanel extends JPanel {
             table.addCell(cell);
         }
         
-        // Add data rows
+        // Add data rows with Name first and title case formatting
         com.itextpdf.text.Font cellFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 8);
-        for (SelfieDetail record : data) {
+        for (SelfieDetail record : uniqueData) {
+            table.addCell(new PdfPCell(new Phrase(toTitleCase(record.getName()) != null ? toTitleCase(record.getName()) : "", cellFont)));
             table.addCell(new PdfPCell(new Phrase(record.getEmail() != null ? record.getEmail() : "", cellFont)));
-            table.addCell(new PdfPCell(new Phrase(record.getName() != null ? record.getName() : "", cellFont)));
             table.addCell(new PdfPCell(new Phrase(record.getContact() != null ? record.getContact() : "", cellFont)));
             table.addCell(new PdfPCell(new Phrase(record.getDate() != null ? record.getDate() : "", cellFont)));
             table.addCell(new PdfPCell(new Phrase(record.getPhotos() != null ? record.getPhotos().toString() : "0", cellFont)));

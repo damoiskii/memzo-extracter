@@ -170,6 +170,11 @@ public class BlurredModalOverlay {
      * @param radius The blur radius
      * @return The blurred image
      */
+    // Constants for blur effect
+    private static final int BLUR_OFFSET_MIN = -2;
+    private static final int BLUR_OFFSET_MAX = 2;
+    private static final float ALPHA_VALUE = 0.08f;
+
     private static BufferedImage applyGaussianBlur(BufferedImage source, float radius) {
         if (source == null) return null;
         
