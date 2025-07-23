@@ -17,7 +17,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+// import java.util.*;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
@@ -26,7 +26,7 @@ import java.util.function.Consumer;
 
 // iText imports for PDF generation
 import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
+// import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
