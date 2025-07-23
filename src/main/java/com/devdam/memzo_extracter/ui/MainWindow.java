@@ -5,6 +5,7 @@ import com.devdam.memzo_extracter.service.CsvService;
 import com.devdam.memzo_extracter.ui.panel.DataPanel;
 import com.devdam.memzo_extracter.ui.panel.EmailRecordsPanel;
 import com.devdam.memzo_extracter.ui.panel.StatsPanel;
+import com.devdam.memzo_extracter.ui.panel.UniqueEmailsPanel;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 
@@ -19,6 +20,7 @@ public class MainWindow extends JFrame {
     private final DataPanel dataPanel;
     private final StatsPanel statsPanel;
     private final EmailRecordsPanel emailRecordsPanel;
+    private final UniqueEmailsPanel uniqueEmailsPanel;
     private JTabbedPane tabbedPane;
     private boolean isDarkTheme = false;
     
@@ -27,6 +29,7 @@ public class MainWindow extends JFrame {
         dataPanel = new DataPanel(csvService, this::updateAllPanels);
         statsPanel = new StatsPanel(csvService);
         emailRecordsPanel = new EmailRecordsPanel(csvService);
+        uniqueEmailsPanel = new UniqueEmailsPanel(csvService);
         
         initializeUI();
         setupEventListeners();
@@ -65,6 +68,7 @@ public class MainWindow extends JFrame {
         tabbedPane.addTab("📊 Data Management", dataPanel);
         tabbedPane.addTab("📈 Statistics", statsPanel);
         tabbedPane.addTab("📧 Email Records", emailRecordsPanel);
+        tabbedPane.addTab("🗄️ Unique Database", uniqueEmailsPanel);
         
         // Create status bar
         JPanel statusBar = createStatusBar();
@@ -230,6 +234,7 @@ public class MainWindow extends JFrame {
     public void updateAllPanels(List<SelfieDetail> data) {
         statsPanel.updateStats(data);
         emailRecordsPanel.updateData(data);
+        uniqueEmailsPanel.updateFromMainData(data);
     }
     
     public void showWindow() {
