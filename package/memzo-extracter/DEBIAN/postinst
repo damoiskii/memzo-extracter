@@ -1,0 +1,13 @@
+#!/bin/bash
+# Post-installation script
+
+echo "Memzo Extracter installed successfully!"
+echo "You can now run 'memzo-extracter' from the command line"
+echo "or find it in your applications menu."
+
+# Update desktop database
+if command -v update-desktop-database &> /dev/null; then
+    update-desktop-database /usr/share/applications
+fi
+
+exit 0

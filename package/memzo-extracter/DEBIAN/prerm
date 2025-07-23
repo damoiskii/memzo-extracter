@@ -1,0 +1,5 @@
+#!/bin/bash
+# Pre-removal script
+
+echo "Removing Memzo Extracter..."
+exit 0

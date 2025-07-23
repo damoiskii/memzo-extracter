@@ -1,0 +1,13 @@
+Package: memzo-extracter
+Version: 1.0.0
+Section: utils
+Priority: optional
+Architecture: all
+Depends: openjdk-17-jre | openjdk-18-jre | openjdk-19-jre | openjdk-20-jre | openjdk-21-jre
+Maintainer: DevDam <contact@devdam.com>
+Description: Memzo Extracter
+ CSV Data Analysis Tool with Export Capabilities
+ .
+ A professional Java application for analyzing CSV data with statistics,
+ charts, email management, and export capabilities to CSV and PDF formats.
+ Features include data filtering, unique email tracking, and modern UI.

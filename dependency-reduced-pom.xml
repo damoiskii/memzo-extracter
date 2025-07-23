@@ -87,8 +87,103 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.panteleyev</groupId>
+        <artifactId>jpackage-maven-plugin</artifactId>
+        <version>1.6.5</version>
+        <configuration>
+          <n>${app.name}</n>
+          <appVersion>${app.version}</appVersion>
+          <vendor>${app.vendor}</vendor>
+          <destination>target/installer</destination>
+          <input>target/</input>
+          <mainJar>memzo-extracter-0.0.1-SNAPSHOT-ui.jar</mainJar>
+          <mainClass>${app.main.class}</mainClass>
+          <javaOptions>
+            <option>-Dfile.encoding=UTF-8</option>
+            <option>-Djava.awt.headless=false</option>
+          </javaOptions>
+          <options>
+            <option>--bind-services</option>
+          </options>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>windows</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.panteleyev</groupId>
+            <artifactId>jpackage-maven-plugin</artifactId>
+            <configuration>
+              <type>MSI</type>
+              <winMenu>true</winMenu>
+              <winDirChooser>true</winDirChooser>
+              <winShortcut>true</winShortcut>
+              <winMenuGroup>DevDam</winMenuGroup>
+              <icon>src/main/resources/icon.ico</icon>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>mac</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.panteleyev</groupId>
+            <artifactId>jpackage-maven-plugin</artifactId>
+            <configuration>
+              <type>DMG</type>
+              <icon>src/main/resources/icon.icns</icon>
+              <macPackageIdentifier>com.devdam.memzoextracter</macPackageIdentifier>
+              <macPackageName>${app.name}</macPackageName>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>linux</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.panteleyev</groupId>
+            <artifactId>jpackage-maven-plugin</artifactId>
+            <configuration>
+              <type>DEB</type>
+              <linuxPackageName>memzo-extracter</linuxPackageName>
+              <linuxAppCategory>Office</linuxAppCategory>
+              <linuxShortcut>true</linuxShortcut>
+              <linuxMenuGroup>Office;Utility;</linuxMenuGroup>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>linux-rpm</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.panteleyev</groupId>
+            <artifactId>jpackage-maven-plugin</artifactId>
+            <configuration>
+              <type>RPM</type>
+              <linuxPackageName>memzo-extracter</linuxPackageName>
+              <linuxAppCategory>Office</linuxAppCategory>
+              <linuxShortcut>true</linuxShortcut>
+              <linuxMenuGroup>Office;Utility;</linuxMenuGroup>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
   <dependencies>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -211,6 +306,10 @@
     </dependency>
   </dependencies>
   <properties>
+    <app.vendor>DevDam</app.vendor>
     <java.version>17</java.version>
+    <app.main.class>com.devdam.memzo_extracter.ui.ApplicationLauncher</app.main.class>
+    <app.name>MemzoExtracter</app.name>
+    <app.version>1.0.0</app.version>
   </properties>
 </project>

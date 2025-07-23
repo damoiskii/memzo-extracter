@@ -1,0 +1,16 @@
+#!/bin/bash
+# Memzo Extracter launcher
+
+INSTALL_DIR="/usr/local/share/memzo-extracter"
+JAR_FILE="$INSTALL_DIR/memzo-extracter-0.0.1-SNAPSHOT.jar"
+
+# Check if Java is available
+if ! command -v java &> /dev/null; then
+    echo "Error: Java 17+ is required but not found"
+    echo "Please install OpenJDK 17 or higher:"
+    echo "  sudo apt install openjdk-17-jre"
+    exit 1
+fi
+
+# Launch the application
+exec java -Xmx1G -Dfile.encoding=UTF-8 -Djava.awt.headless=false -jar "$JAR_FILE" "$@"
